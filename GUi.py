@@ -111,10 +111,23 @@ class SelectorDialog(wx.Dialog):
         info = wx.StaticText(p, label=f"Seçmek istediğiniz kişileri işaretleyin ({len(data_list)} kişi):")
         v.Add(info, 0, wx.ALL, 10)
 
-        choices = [item["label"] for item in data_list]   # Tarihli
+        choices = [item["label"] for item in data_list]
         self.checklist = wx.CheckListBox(p, choices=choices)
         v.Add(self.checklist, 1, wx.EXPAND | wx.ALL, 10)
 
+        # 🔹 Yeni: Tümünü Seç / Tümünü Kaldır butonları
+        btn_h = wx.BoxSizer(wx.HORIZONTAL)
+        select_all = wx.Button(p, label="Tümünü Seç")
+        select_all.Bind(wx.EVT_BUTTON, self.select_all)
+        btn_h.Add(select_all, 0, wx.ALL, 5)
+
+        clear_all = wx.Button(p, label="Tümünü Kaldır")
+        clear_all.Bind(wx.EVT_BUTTON, self.clear_all)
+        btn_h.Add(clear_all, 0, wx.ALL, 5)
+
+        v.Add(btn_h, 0, wx.ALIGN_CENTER | wx.ALL, 5)
+
+        # Tamam / İptal butonları
         ok_cancel = wx.BoxSizer(wx.HORIZONTAL)
         ok_btn = wx.Button(p, wx.ID_OK, "Takip Et")
         cancel_btn = wx.Button(p, wx.ID_CANCEL, "İptal")
@@ -125,8 +138,18 @@ class SelectorDialog(wx.Dialog):
         p.SetSizer(v)
         self.data_list = data_list
 
+    # 🔹 Fonksiyonlar
+    def select_all(self, event):
+        for i in range(self.checklist.GetCount()):
+            self.checklist.Check(i, True)
+
+    def clear_all(self, event):
+        for i in range(self.checklist.GetCount()):
+            self.checklist.Check(i, False)
+
     def get_selected_items(self):
         return [self.data_list[i] for i in self.checklist.GetCheckedItems()]
+
 
 
 # === Ana Frame ===
