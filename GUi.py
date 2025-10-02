@@ -332,9 +332,11 @@ class TrackerFrame(wx.Frame):
                 now = time.time()
                 if (self.online_list.GetCount() > 0) and (now - self.last_beep_time) >= 5:
                     try:
-                        winsound.Beep(800, 200)
-                    except:
-                        pass
+                        sound_path = r"C:\Windows\Media\Windows Hardware Fail.wav"
+                        
+                        winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                    except Exception as e:
+                        print(f"[!] Ses çalınamadı: {e}")
                     self.last_beep_time = now
                 gc.collect()
             time.sleep(5)
