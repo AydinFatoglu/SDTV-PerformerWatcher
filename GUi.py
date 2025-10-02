@@ -132,7 +132,7 @@ class SelectorDialog(wx.Dialog):
 # === Ana Frame ===
 class TrackerFrame(wx.Frame):
     def __init__(self):
-        super().__init__(None, title="SDME Yayıncı Takip Aracı 1.2", size=(820, 450))
+        super().__init__(None, title="SDME Yayıncı Takip Aracı 1.2", size=(820, 450),style=wx.DEFAULT_FRAME_STYLE & ~(wx.MAXIMIZE_BOX | wx.RESIZE_BORDER))
         self.Center()
         self.logged_in = False
         self.selected_items = []
