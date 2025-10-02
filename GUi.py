@@ -222,7 +222,7 @@ class TrackerFrame(wx.Frame):
     def show_giftlist(self, event):
         performers = fetch_all_unique_names_sorted()
         if not performers:
-            wx.MessageBox("Gift/Spend listesi boş!", "Bilgi", wx.OK | wx.ICON_INFORMATION)
+            wx.MessageBox("Henüz hiç sohbet etmediniz!", "Bilgi", wx.OK | wx.ICON_INFORMATION)
             return
 
         dlg = SelectorDialog(self, "Sohbet Listem", performers)
