@@ -1,11 +1,11 @@
-import wx, cloudscraper, threading, time, gc, winsound, math
+import wx, cloudscraper, time, gc, winsound, math
 from bs4 import BeautifulSoup
 from datetime import datetime
 
 # API URLs
-LOGIN_URL = "https://WWW.URL.ME/api/checkuserlogin.php"
-SPENTHISTORY_URL = "https://WWW.URL.ME/api/spenthistory.php"
-INDEX_URL = "https://WWW.URL.ME/index.php"
+LOGIN_URL = "https://www.yourrurl.me/api/checkuserlogin.php"
+SPENTHISTORY_URL = "https://www.yourrurl.me/api/spenthistory.php"
+INDEX_URL = "https://www.yourrurl.me/index.php"
 
 # Headers
 HEADERS = {
@@ -14,13 +14,12 @@ HEADERS = {
     "X-Requested-With": "XMLHttpRequest"
 }
 
-# Giriş bilgileri ilk açılışta sorulacak
 USERNAME = ""
 PASSWORD = ""
 
 scraper = cloudscraper.create_scraper()
 
-# === SpendHistory Çekme Fonksiyonu ===
+# === SpendHistory Çekme ===
 def fetch_all_unique_names_sorted():
     ts = int(time.time() * 1000)
     r = scraper.get(SPENTHISTORY_URL, headers=HEADERS, params={"draw": "1", "start": "0", "length": "1", "_": str(ts)})
@@ -34,7 +33,7 @@ def fetch_all_unique_names_sorted():
     for p in range(pages):
         start = p * length
         params = {
-            "draw": str(p+2),
+            "draw": str(p + 2),
             "start": str(start),
             "length": str(length),
             "order[0][column]": "3",
@@ -64,15 +63,15 @@ def fetch_all_unique_names_sorted():
                 performers.append({
                     "name": name,
                     "id": pid,
-                    "label": f"{name} ({pid}) [{date_str}]",   # Dialog için
-                    "short_label": f"{name} ({pid})"           # Ana ekran için
+                    "label": f"{name} ({pid}) [{date_str}]",
+                    "short_label": f"{name} ({pid})"
                 })
                 seen.add(name)
 
     return performers
 
 
-# === Giriş Dialogu ===
+# === Login Dialog ===
 class LoginDialog(wx.Dialog):
     def __init__(self, parent):
         super().__init__(parent, title="SDME Yayıncı Takip Aracı 1.2", size=(350, 200))
@@ -93,15 +92,13 @@ class LoginDialog(wx.Dialog):
         v.Add(h, 0, wx.ALIGN_CENTER | wx.ALL, 10)
 
         p.SetSizer(v)
-        
-        # Diyaloğu ekranın ortasına al
         self.Centre()
 
     def get_credentials(self):
         return self.username.GetValue(), self.password.GetValue()
 
 
-# === Selector Dialogu ===
+# === Selector Dialog ===
 class SelectorDialog(wx.Dialog):
     def __init__(self, parent, title, data_list):
         super().__init__(parent, title=title, size=(500, 600))
@@ -115,7 +112,6 @@ class SelectorDialog(wx.Dialog):
         self.checklist = wx.CheckListBox(p, choices=choices)
         v.Add(self.checklist, 1, wx.EXPAND | wx.ALL, 10)
 
-        # 🔹 Yeni: Tümünü Seç / Tümünü Kaldır butonları
         btn_h = wx.BoxSizer(wx.HORIZONTAL)
         select_all = wx.Button(p, label="Tümünü Seç")
         select_all.Bind(wx.EVT_BUTTON, self.select_all)
@@ -124,10 +120,8 @@ class SelectorDialog(wx.Dialog):
         clear_all = wx.Button(p, label="Tümünü Kaldır")
         clear_all.Bind(wx.EVT_BUTTON, self.clear_all)
         btn_h.Add(clear_all, 0, wx.ALL, 5)
-
         v.Add(btn_h, 0, wx.ALIGN_CENTER | wx.ALL, 5)
 
-        # Tamam / İptal butonları
         ok_cancel = wx.BoxSizer(wx.HORIZONTAL)
         ok_btn = wx.Button(p, wx.ID_OK, "Takip Et")
         cancel_btn = wx.Button(p, wx.ID_CANCEL, "İptal")
@@ -138,7 +132,6 @@ class SelectorDialog(wx.Dialog):
         p.SetSizer(v)
         self.data_list = data_list
 
-    # 🔹 Fonksiyonlar
     def select_all(self, event):
         for i in range(self.checklist.GetCount()):
             self.checklist.Check(i, True)
@@ -151,18 +144,17 @@ class SelectorDialog(wx.Dialog):
         return [self.data_list[i] for i in self.checklist.GetCheckedItems()]
 
 
-
 # === Ana Frame ===
 class TrackerFrame(wx.Frame):
     def __init__(self):
-        super().__init__(None, title="SDME Yayıncı Takip Aracı 1.2", size=(820, 450),style=wx.DEFAULT_FRAME_STYLE & ~(wx.MAXIMIZE_BOX | wx.RESIZE_BORDER))
+        super().__init__(None, title="SDME Yayıncı Takip Aracı 1.2",
+                         size=(820, 450),
+                         style=wx.DEFAULT_FRAME_STYLE & ~(wx.MAXIMIZE_BOX | wx.RESIZE_BORDER))
         self.Center()
         self.logged_in = False
         self.selected_items = []
         self.tracking_active = False
-        self.last_beep_time = 0
 
-        # İlk açılışta kullanıcı adı / şifre sor
         dlg = LoginDialog(self)
         if dlg.ShowModal() == wx.ID_OK:
             global USERNAME, PASSWORD
@@ -181,10 +173,10 @@ class TrackerFrame(wx.Frame):
             wx.MessageBox("Giriş başarısız!", "Hata", wx.OK | wx.ICON_ERROR)
             self.Close()
 
+    # ---------------- UI ----------------
     def init_ui(self):
         p = wx.Panel(self)
         v = wx.BoxSizer(wx.VERTICAL)
-
         self.status = wx.StaticText(p, label="Giriş yapılıyor...")
         v.Add(self.status, 0, wx.ALL, 5)
 
@@ -213,7 +205,7 @@ class TrackerFrame(wx.Frame):
         v.Add(h, 1, wx.EXPAND | wx.ALL, 10)
 
         btn_h = wx.BoxSizer(wx.HORIZONTAL)
-        site_select_btn = wx.Button(p, label="Aktif Yapıncı Seç")
+        site_select_btn = wx.Button(p, label="Aktif Yayıncı Seç")
         site_select_btn.Bind(wx.EVT_BUTTON, self.open_site_selector)
         btn_h.Add(site_select_btn, 0, wx.ALL, 5)
 
@@ -228,6 +220,7 @@ class TrackerFrame(wx.Frame):
         v.Add(btn_h, 0, wx.ALIGN_CENTER | wx.ALL, 5)
         p.SetSizer(v)
 
+    # ---------------- LOGIN ----------------
     def do_login(self):
         try:
             data = {"username": USERNAME, "password": PASSWORD}
@@ -242,28 +235,7 @@ class TrackerFrame(wx.Frame):
             self.status.SetLabel(f"Giriş hatası: {str(e)}")
             return False
 
-    def show_giftlist(self, event):
-        performers = fetch_all_unique_names_sorted()
-        if not performers:
-            wx.MessageBox("Henüz hiç sohbet etmediniz!", "Bilgi", wx.OK | wx.ICON_INFORMATION)
-            return
-
-        dlg = SelectorDialog(self, "Sohbet Listem", performers)
-        if dlg.ShowModal() == wx.ID_OK:
-            selected = dlg.get_selected_items()
-            for item in selected:
-                if not any(existing["id"] == item["id"] for existing in self.selected_items):
-                    # Ana pencere için sadece short_label kullan
-                    self.selected_items.append({
-                        "name": item["name"],
-                        "id": item["id"],
-                        "label": item["short_label"]
-                    })
-            if self.selected_items:
-                self.status.SetLabel(f"Spend History'den {len(selected)} kişi eklendi")
-                self.start_tracking()
-        dlg.Destroy()
-
+    # ---------------- FONKSİYONLAR ----------------
     def load_performers_from_site(self):
         performers = []
         try:
@@ -276,7 +248,12 @@ class TrackerFrame(wx.Frame):
                     name = name_tag.text.strip()
                     if pid not in seen:
                         seen.add(pid)
-                        performers.append({"name": name, "id": pid, "label": f"{name} ({pid})", "short_label": f"{name} ({pid})"})
+                        performers.append({
+                            "name": name,
+                            "id": pid,
+                            "label": f"{name} ({pid})",
+                            "short_label": f"{name} ({pid})"
+                        })
         except:
             pass
         return performers
@@ -284,7 +261,7 @@ class TrackerFrame(wx.Frame):
     def open_site_selector(self, event):
         performers = self.load_performers_from_site()
         if not performers:
-            wx.MessageBox("Site'den yayıncı listesi alınamadı!", "Hata", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox("Siteden yayıncı listesi alınamadı!", "Hata", wx.OK | wx.ICON_ERROR)
             return
         dlg = SelectorDialog(self, "Aktif Yayıncı Seç", performers)
         if dlg.ShowModal() == wx.ID_OK:
@@ -301,20 +278,65 @@ class TrackerFrame(wx.Frame):
                 self.start_tracking()
         dlg.Destroy()
 
+    def show_giftlist(self, event):
+        performers = fetch_all_unique_names_sorted()
+        if not performers:
+            wx.MessageBox("Henüz hiç sohbet etmediniz!", "Bilgi", wx.OK | wx.ICON_INFORMATION)
+            return
+
+        dlg = SelectorDialog(self, "Sohbet Listem", performers)
+        if dlg.ShowModal() == wx.ID_OK:
+            selected = dlg.get_selected_items()
+            for item in selected:
+                if not any(existing["id"] == item["id"] for existing in self.selected_items):
+                    self.selected_items.append({
+                        "name": item["name"],
+                        "id": item["id"],
+                        "label": item["short_label"]
+                    })
+            if self.selected_items:
+                self.status.SetLabel(f"Sohbet Listesinden {len(selected)} kişi eklendi, toplam {len(self.selected_items)} takipte")
+                self.start_tracking()
+        dlg.Destroy()
+
+    # ---------------- TAKİP ----------------
+    def start_tracking(self):
+        self.tracking_active = True
+        self.run_check_once()
+
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
+        self.timer.Start(5000)
+
+    def on_timer(self, event):
+        if self.tracking_active and self.logged_in and self.selected_items:
+            self.check_status_once()
+
+            # 🔹 Her kontrol turunda genel oda doluysa ses çal
+            online_count = self.online_list.GetCount()
+
+            # 5 saniyede bir çalsın ama sadece genel oda doluysa
+            if online_count > 0:
+                try:
+                    sound_path = r"C:\Windows\Media\Windows Hardware Fail.wav"
+                    winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                except Exception as e:
+                    print(f"[!] Ses çalınamadı: {e}")
+
+
     def clear_all_tracking(self, event):
         self.tracking_active = False
+        if hasattr(self, "timer"):
+            self.timer.Stop()
         self.selected_items = []
         self.online_list.Clear()
         self.private_list.Clear()
         self.offline_list.Clear()
         self.status.SetLabel("Tüm takipler temizlendi.")
-
-    def start_tracking(self):
-        self.tracking_active = True
-        self.run_check_once()
-        t = threading.Thread(target=self.check_loop)
-        t.daemon = True
-        t.start()
+        self.online_list.GetContainingSizer().GetStaticBox().SetLabel("GENEL ODADA (0)")
+        self.private_list.GetContainingSizer().GetStaticBox().SetLabel("ÖZEL ODADA (0)")
+        self.offline_list.GetContainingSizer().GetStaticBox().SetLabel("SİSTEMDE YOK (0)")
+        self.Layout()
 
     def run_check_once(self):
         self.check_status_once()
@@ -332,39 +354,39 @@ class TrackerFrame(wx.Frame):
                 is_public = f"performerchat.php?id={pid}" in html
                 is_private = f"profile.php?id={pid}" in html
 
-                status = "online" if is_public else "private" if is_private else "offline"
-
-                if status == "online":
+                if is_public:
                     online.append(label)
-                elif status == "private":
+                elif is_private:
                     private.append(label)
                 else:
                     offline.append(label)
 
-            wx.CallAfter(self.online_list.Set, online)
-            wx.CallAfter(self.private_list.Set, private)
-            wx.CallAfter(self.offline_list.Set, offline)
+            wx.CallAfter(self.online_list.Clear)
+            wx.CallAfter(self.online_list.AppendItems, online)
+            wx.CallAfter(self.private_list.Clear)
+            wx.CallAfter(self.private_list.AppendItems, private)
+            wx.CallAfter(self.offline_list.Clear)
+            wx.CallAfter(self.offline_list.AppendItems, offline)
+
+            wx.CallAfter(self.online_list.GetContainingSizer().GetStaticBox().SetLabel,
+                         f"GENEL ODADA ({len(online)})")
+            wx.CallAfter(self.private_list.GetContainingSizer().GetStaticBox().SetLabel,
+                         f"ÖZEL ODADA ({len(private)})")
+            wx.CallAfter(self.offline_list.GetContainingSizer().GetStaticBox().SetLabel,
+                         f"SİSTEMDE YOK ({len(offline)})")
+            wx.CallAfter(self.Layout)
+            
+            # 🔹 5 kontrolde bir bellek temizle
+            self.gc_counter = getattr(self, "gc_counter", 0) + 1
+            if self.gc_counter >= 5:
+                gc.collect()
+                self.gc_counter = 0
 
         except Exception as e:
             wx.CallAfter(self.status.SetLabel, f"Kontrol hatası: {str(e)}")
 
-    def check_loop(self):
-        while True:
-            if self.tracking_active and self.logged_in and self.selected_items:
-                self.check_status_once()
-                now = time.time()
-                if (self.online_list.GetCount() > 0) and (now - self.last_beep_time) >= 5:
-                    try:
-                        sound_path = r"C:\Windows\Media\Windows Hardware Fail.wav"
-                        
-                        winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
-                    except Exception as e:
-                        print(f"[!] Ses çalınamadı: {e}")
-                    self.last_beep_time = now
-                gc.collect()
-            time.sleep(5)
 
-
+# === Main ===
 if __name__ == "__main__":
     app = wx.App(False)
     TrackerFrame().Show()
